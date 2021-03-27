@@ -4,23 +4,27 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
+    // Config
     [SerializeField] int maxHealth = 1;
-    private int currentHealth;
-    [SerializeField] Animator animator;
     [SerializeField] float fadingTime = 3f;
 
+    // State
+    private int currentHealth;
 
-    // Start is called before the first frame update
+    // Cache
+    Animator enemyAnimator;
+    AnimationHandler myAnimationHandler;
+
     void Start()
     {
         currentHealth = maxHealth;
+        enemyAnimator = GetComponent<Animator>();
+        myAnimationHandler = FindObjectOfType<AnimationHandler>();
     }
 
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
-
-        animator.SetTrigger("Hurt");
 
         if (currentHealth <= 0) {
             Die();
@@ -29,7 +33,7 @@ public class Enemy : MonoBehaviour
 
     void Die()
     {
-        animator.SetBool("IsDead", true);
+        myAnimationHandler.ChangeAnimationState("ENEMY_DIE", enemyAnimator);
         GetComponent<Collider2D>().enabled = false;
         enabled = false;
         StartCoroutine(Fading());

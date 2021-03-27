@@ -19,7 +19,7 @@ TagManager:
   - Destructible
   - Enemy
   - Hazards
-  - 
+  - collectable
   - 
   - 
   - 
@@ -49,6 +49,9 @@ TagManager:
     locked: 0
   - name: Player
     uniqueID: 2555742263
+    locked: 0
+  - name: collectable
+    uniqueID: 881930339
     locked: 0
   - name: Hazards
     uniqueID: 3401671861

@@ -4,21 +4,23 @@ using UnityEngine;
 
 public class PlayerCombat : MonoBehaviour
 {
-    [SerializeField] Animator animator;
-    // attack
+    // Config
     [SerializeField] float attackRate = 1.0f;
-
-    [SerializeField] Transform attackPoint;
+    [SerializeField] Transform attackPoint = null;
     [SerializeField] float attackRange = 0.5f;
-    [SerializeField] LayerMask enemyLayers;
+    [SerializeField] LayerMask enemyLayers = 0;
 
+    // State
     public int attackDamage = 10;
-
-    AnimationHandler myAnimationHandler;
     bool isAttacking = false;
+
+    // Cache
+    Animator playerAnimator;
+    AnimationHandler myAnimationHandler;
 
     void Start()
     {
+        playerAnimator = GetComponent<Animator>();
         myAnimationHandler = FindObjectOfType<AnimationHandler>();
     }
 
@@ -36,7 +38,7 @@ public class PlayerCombat : MonoBehaviour
     }
     void Attack()
     {
-        myAnimationHandler.ChangeAnimationState(AnimationName.PLAYER_ATTACK, animator);
+        myAnimationHandler.ChangeAnimationState(AnimationName.PLAYER_ATTACK, playerAnimator);
         // detect enemies in range of attack
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayers);
 

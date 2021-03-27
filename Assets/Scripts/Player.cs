@@ -6,8 +6,9 @@ public class Player : MonoBehaviour {
     // Config
     [SerializeField] float runSpeed = 5.0f;
     [SerializeField] float jumpSpeed = 5.0f;
-    [SerializeField] float climbSpeed = 5.0f;
-    [SerializeField] Vector2 deathKick = new Vector2(25f, 25f);
+    [SerializeField] int maxAirJumps = 1;
+    [SerializeField] Transform respawnPoint = null;
+
 
     // State
     bool isAlive = true;
@@ -21,33 +22,37 @@ public class Player : MonoBehaviour {
     PlayerCombat myPlayerCombat;
     CapsuleCollider2D myBodyCollider2D;
     BoxCollider2D myFeetCollider2D;
-    float gravityScaleAtStart;
     AnimationHandler myAnimationHandler;
 
-
-
-    // attack
-    [SerializeField] float attackRate = 1.0f;
-
-    [SerializeField] Transform attackPoint;
-    [SerializeField] float attackRange = 0.5f;
-    [SerializeField] LayerMask enemyLayers;
-    public int attackDamage = 10;
-    bool isAttacking = false;
-
-    void Start() {
+    private void Awake()
+    {
         myRigidBody = GetComponent<Rigidbody2D>();
         myAnimator = GetComponent<Animator>();
         myPlayerCombat = GetComponent<PlayerCombat>();
         myBodyCollider2D = GetComponent<CapsuleCollider2D>();
         myFeetCollider2D = GetComponent<BoxCollider2D>();
-        gravityScaleAtStart = myRigidBody.gravityScale;
         myAnimationHandler = FindObjectOfType<AnimationHandler>();
+    }
+
+    void Start() {
+
     }
 
     // Update is called once per frame
     void Update() {
-        if (!isAlive) { return; }
+        if (!isAlive) {
+            // in death -> freeze position
+            myRigidBody.velocity = Vector2.zero;
+            if (myRigidBody.gravityScale != 0f)
+            {
+                myRigidBody.gravityScale = 0f;
+            }
+            return; 
+        }
+        if (myRigidBody.gravityScale != 1f)
+        {
+            myRigidBody.gravityScale = 1f;
+        }
         isTouchingGround = myFeetCollider2D.IsTouchingLayers(LayerMask.GetMask("Forground"));
         isTouchingHazards = myBodyCollider2D.IsTouchingLayers(LayerMask.GetMask("Enemy", "Hazards"));
         Run();
@@ -83,12 +88,11 @@ public class Player : MonoBehaviour {
     private void Jump() {
         if (!isTouchingGround)
         {
-            // Make DoubleJump
-            if (Input.GetButtonDown("Jump") && jumps < 1)
+            // Make AirJump
+            if (Input.GetButtonDown("Jump") && jumps < maxAirJumps)
             {
                 jumps++;
                 Vector2 jumpVelocityToAdd = new Vector2(0f, jumpSpeed);
-                // myRigidBody.velocity += jumpVelocityToAdd;
                 myRigidBody.velocity = jumpVelocityToAdd;
             }
             if (!myPlayerCombat.IsAttacking())
@@ -107,7 +111,6 @@ public class Player : MonoBehaviour {
         }
         if (Input.GetButtonDown("Jump")) {
             Vector2 jumpVelocityToAdd = new Vector2(0f, jumpSpeed);
-            // myRigidBody.velocity += jumpVelocityToAdd;
             myRigidBody.velocity = jumpVelocityToAdd;
         }
         jumps = 0;
@@ -118,11 +121,17 @@ public class Player : MonoBehaviour {
         if (isTouchingHazards)
         {
             isAlive = false;
-            myAnimator.SetTrigger("dying");
-            GetComponent<Rigidbody2D>().velocity = deathKick;
             myAnimationHandler.ChangeAnimationState(AnimationName.PLAYER_DEATH, myAnimator);
-            // FindObjectOfType<GameSession>().ProcessPlayerDeath();
+            StartCoroutine(Respawn());
         }
+    }
+
+    IEnumerator Respawn() {
+        yield return new WaitForSeconds(1f);
+        gameObject.transform.position = respawnPoint.position;
+        // delay of buggy respawn. sometimes after respawn the player hit the hazard again and dies again
+        yield return new WaitForSeconds(0.1f);
+        isAlive = true;
     }
 
     public bool IsAlive()
